@@ -7,7 +7,7 @@ This file owns `Next finding ID` and projects current issue-file state.
 `Next-Action` is the 2–6 word `Next-Action/Summary` projection from the issue record.
 When a row disagrees with its issue file, correct the row from the issue file in the same task.
 
-Next finding ID: ISSUE-038
+Next finding ID: ISSUE-040
 
 ## Open-Findings
 
@@ -50,6 +50,8 @@ Next finding ID: ISSUE-038
 | [ISSUE-035](issues/ISSUE-035.md) | mDNS: cached addresses ignore TTL and goodbye records | Investigating | Not-Selected | Not-Selected | Medium | Reproduce stale mDNS records | Not published. |
 | [ISSUE-036](issues/ISSUE-036.md) | service: startup retry ignores cancellation | Investigating | Not-Selected | Not-Selected | Medium | Reproduce startup cancellation delay | Not published. |
 | [ISSUE-037](issues/ISSUE-037.md) | forwarder: DoH URL query parameters are not preserved | Investigating | Not-Selected | Not-Selected | Medium | Reproduce DoH query loss | Not published. |
+| [ISSUE-038](issues/ISSUE-038.md) | resolver: client discovery runs before fresh cache hits | Investigating | Not-Selected | Not-Selected | High | Recreate cache-hit discovery reproducer | Not published. |
+| [ISSUE-039](issues/ISSUE-039.md) | reporting: reverse lookup precedes overriding MAC name | Investigating | Not-Selected | Not-Selected | High | Reproduce discarded reverse lookup | Not published. |
 
 ## Archived-Findings
 
