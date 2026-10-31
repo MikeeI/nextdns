@@ -7,7 +7,7 @@ This file owns `Next finding ID` and projects current issue-file state.
 `Next-Action` is the 2–6 word `Next-Action/Summary` projection from the issue record.
 When a row disagrees with its issue file, correct the row from the issue file in the same task.
 
-Next finding ID: ISSUE-043
+Next finding ID: ISSUE-048
 
 ## Open-Findings
 
@@ -55,6 +55,11 @@ Next finding ID: ISSUE-043
 | [ISSUE-040](issues/ISSUE-040.md) | control: late replies satisfy later same-name requests | Investigating | Not-Selected | Not-Selected | Medium | Recreate control correlation reproducer | Not published. |
 | [ISSUE-041](issues/ISSUE-041.md) | control: send deadlines omit lock and socket writes | Investigating | Not-Selected | Not-Selected | Medium | Recreate control cancellation reproducer | Not published. |
 | [ISSUE-042](issues/ISSUE-042.md) | OpenWrt: DHCP DNS membership accepts address substrings | Investigating | Not-Selected | Not-Selected | Medium | Reproduce DHCP substring match | Not published. |
+| [ISSUE-043](issues/ISSUE-043.md) | reporting: peer IP is formatted twice per callback | Investigating | Not-Selected | Not-Selected | Low | Measure complete reporting workload | Not published. |
+| [ISSUE-044](issues/ISSUE-044.md) | proxy: hosts misses allocate a discarded error | Investigating | Not-Selected | Not-Selected | Low | Measure realistic hosts misses | Not published. |
+| [ISSUE-045](issues/ISSUE-045.md) | proxy: UDP ancillary buffer is allocated per receive | Investigating | Not-Selected | Not-Selected | Low | Validate UDP ancillary buffer ownership | Not published. |
+| [ISSUE-046](issues/ISSUE-046.md) | proxy: TCP frame prefixes allocate a temporary buffer | Investigating | Not-Selected | Not-Selected | Low | Verify TCP prefix error semantics | Not published. |
+| [ISSUE-047](issues/ISSUE-047.md) | proxy: private PTR classification runs with policy disabled | Investigating | Not-Selected | Not-Selected | Low | Measure policy-disabled PTR traffic | Not published. |
 
 ## Archived-Findings
 
