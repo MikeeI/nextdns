@@ -1,98 +1,114 @@
-# AGENTS
+# Repository Guidelines
 
-## Project Context
+<essential-rule>
+AGENTS.md is the sole authoritative project context file.
+Read and edit AGENTS.md directly.
+</essential-rule>
 
-- Project: NextDNS CLI (`github.com/nextdns/nextdns`)
-- Language: Go (`go 1.26`)
-- Purpose: Command-line DNS-over-HTTPS client focused on NextDNS, with support for other DoH providers and split-horizon setups.
-- Target environments: Routers and Unix-like systems first, with support for macOS and Windows.
+## Project Overview
 
-## Core Principles
+NextDNS CLI (`github.com/nextdns/nextdns`) is a Go 1.26 DNS-over-HTTPS client for NextDNS and other providers, including split-horizon configurations.
+It targets routers and Unix-like systems as well as macOS and Windows.
 
-1. Privacy first
-   - Preserve user privacy by default.
-   - Avoid adding telemetry or logging sensitive DNS/query data unless explicitly required.
-2. Reliability and safety
-   - Prefer stable behavior over clever optimizations.
-   - Handle network failures and partial outages gracefully.
-3. Cross-platform correctness
-   - Keep behavior consistent across Linux, macOS, and Windows.
-   - Use platform-specific code only when necessary and isolate it clearly.
-4. Minimal, composable design
-   - Keep features small and focused.
-   - Avoid unnecessary dependencies and overly broad abstractions.
-5. Backward compatibility
-   - Preserve existing CLI behavior and flags unless a breaking change is intentional and documented.
-   - Treat config format and runtime behavior as user-facing contracts.
-6. Performance on constrained systems
-   - Optimize for low memory/CPU use, especially router-like environments.
-   - Assume deployments may have minuscule disk space; avoid features that increase on-device storage footprint.
-   - Avoid expensive background work and unbounded caches.
-7. Dependency and binary size discipline
-   - Avoid new dependencies whenever possible; prefer stdlib/internal code when practical.
-   - Be mindful of binary size and startup overhead when adding features.
-   - If a dependency is unavoidable, justify it and keep transitive impact minimal.
+## Fork & Upstream Contribution Intent
 
-## Agent Instructions
+- Official upstream: [nextdns/nextdns](https://github.com/nextdns/nextdns).
+- This checkout is the [MikeeI/nextdns](https://github.com/MikeeI/nextdns) fork, not an independently owned product.
+- Support upstream with evidence-backed issues, comments, and pull requests; prefer small, high-value corrections.
+- On 2026-10-31, the latest 100 closed pull requests included 36 merged and 31 unmerged pull requests opened from forks; this sample is an indicator, not proof of acceptance policy.
+- `ISSUES.md` owns the finding overview and ID allocator; `issues/ISSUE-NNN.md` owns each root cause record; `FORMAT.md` owns the workflow.
+- Apply `skill-fork-contribution-tracking`, `skill-maintainer-communication`, `skill-semantic-compression-3`, and `skill-git-commit-format` as applicable.
+- Search existing work and upstream guidance before proposing a contribution; reproduce bugs against current upstream.
+- Recommend a pull request for a bounded verified fix without an active implementation; otherwise consider a comment, issue, or further investigation.
+- The user selects `Authorized-Work` and `Publication-Target`; research does not authorize implementation.
+- Keep fork-only tracking and personal commits out of upstream contribution diffs.
 
-- Make the smallest safe change that solves the requested problem.
-- Prefer edits that align with existing package boundaries (`proxy`, `resolver`, `router`, `config`, `host`, `ctl`, etc.).
-- Keep operational behavior predictable:
-  - no surprise network calls,
-  - no hidden retries that block shutdown,
-  - no silent fallback that changes security semantics.
-- Be explicit about error handling:
-  - return actionable errors,
-  - avoid swallowing failures,
-  - keep logs concise and useful.
-- Preserve startup/shutdown behavior and service lifecycle semantics.
-- When changing CLI/config behavior, update relevant docs in `README.md` and usage/help text if needed.
+## Branch Roles
 
-## Testing Guidance
+- The canonical contribution base is `upstream/master`.
+- The `personal` branch owns fork context and contribution tracking; never submit it upstream.
+- Create upstream-ready `feat/issue-NNN`, `fix/issue-NNN`, or `chore/issue-NNN` branches from current `upstream/master`.
+- `origin` is the personal fork; `upstream` is `nextdns/nextdns`.
 
-- Run targeted tests for touched packages first, then broader tests when practical.
-- Favor deterministic tests over timing-sensitive behavior.
-- For networking changes, include failure-path coverage (timeouts, unreachable upstream, malformed responses).
-- For platform-specific logic, ensure non-target platforms still compile cleanly.
+## Finding and Contribution Ledger
 
-## Dependency Checklist
+- Read `ISSUES.md` at the start of every agent session and consult `FORMAT.md` for the authoritative workflow.
+- Search existing records before allocating the permanent `Next finding ID`; create the issue record, index row, and increment together.
+- Each finding owns one root cause and starts as `Investigating`, with `Authorized-Work: Not-Selected`, `Publication-Target: Not-Selected`, and `External-Reference: Not published.`
+- Update the issue record and index together after changes to projected fields; run the skill's ledger validator after every ledger mutation.
+- Distinguish observed behavior, source evidence, and assumptions; do not treat similarity, TODOs, or detector output as established findings.
+- `Research-and-Reporting` excludes source implementation; `Pull-Request-Implementation` permits only the recorded authorized scope.
+- Pull-request work must be verified, committed, pushed, and `PR-Ready` before publication.
 
-Before adding a new dependency, verify:
+### External publication approval
 
-- Can this be implemented with Go stdlib or existing internal packages?
-- What is the transitive dependency impact (count and maintenance burden)?
-- What is the expected binary size impact?
-- Does it increase memory, disk, or startup-time footprint on router-class devices?
-- Is there a simpler build-tag or optional-path approach for non-router targets?
-- Is the trade-off documented in the PR/commit rationale?
+Show the exact current draft and target before publishing externally, and obtain user approval for that exact draft and target.
+Reapproval is required after either changes.
+Record the resulting external reference immediately.
+Fork commits, pushes, tracking updates, and authorized implementation follow the active repository contract.
 
-## Binary Budget Note
+## Architecture and Key Directories
 
-- When introducing dependencies or feature-heavy code paths, include a before/after binary size comparison in the PR (or commit notes when no PR is used).
-- Prefer disabling optional features by default when they materially increase size for router-class targets.
+- Root Go files own the command, daemon startup, configuration wiring, and service lifecycle.
+- `config/` owns configuration and profiles; `proxy/` handles DNS proxying; `resolver/` handles upstream resolution and caching.
+- `router/` contains router-specific integrations; `host/`, `discovery/`, `arp/`, and `ndp/` provide host and network discovery.
+- `ctl/` provides the control interface; `scripts/` contains development helpers; `.github/` contains CI and issue templates.
+- `README.md` links the upstream installation and usage wiki and documents OpenWrt relay behavior.
 
-## Commit Tags
+## Development Commands and Testing
 
-Use these commit tags to keep history consistent and searchable:
+- Run focused package tests with `go test ./<package>`; run broader tests when practical.
+- For networking changes cover failure paths, including timeouts, unreachable upstreams, and malformed responses.
+- Verify non-target platforms compile when changing platform-specific code.
+- Run `go test ./router/openwrt` for OpenWrt relay unit and failure-path tests.
+- `router/openwrt/testdata/relay-integration.sh` exercises UCI/rpcd restoration in a disposable OpenWrt container and requires Go and Docker; it does not verify client-visible packets.
+- `scripts/binary-size-diff.sh` supports binary-size comparisons; follow upstream guidance when adding dependencies or feature-heavy paths.
 
-- `feat`: New user-facing functionality or capability.
-  - Use when adding a new flag, command behavior, resolver/proxy feature, or supported integration.
-- `bug`: Bug fix for incorrect behavior, regression, crash, or reliability issue.
-  - Use when correcting behavior that was previously wrong, including edge-case and failure-path fixes.
-- `chore`: Maintenance work that does not change user-facing behavior.
-  - Use for refactors without behavior changes, tooling cleanups, docs-only updates, or test maintenance.
-- `ci`: Continuous integration or release automation changes.
-  - Use for workflow updates, build/release pipeline changes, and automation configuration.
+## Repository-Specific Constraints
 
-Example commit subjects:
+- Preserve privacy: do not add telemetry or sensitive DNS query logging without an explicit requirement.
+- Preserve CLI flags, configuration format, defaults, security semantics, startup/shutdown behavior, and service lifecycle unless an intentional change is documented.
+- Avoid surprise network calls, hidden retries that block shutdown, and silent security-changing fallbacks.
+- Keep cross-platform behavior consistent and isolate necessary platform-specific behavior.
+- Router deployments can have very limited storage, memory, and CPU; avoid unbounded caches and costly background work.
+- Avoid dependencies where practical; assess transitive dependencies, binary size, memory, disk, and startup costs when adding one.
+- Include before/after binary size comparisons in the pull request or commit notes for dependencies or feature-heavy changes.
+- Update README and CLI help when changing documented CLI or configuration behavior.
+- Upstream commit tags are `feat`, `bug`, `chore`, and `ci`; respect upstream conventions for contribution commits.
 
-- `feat: add split-horizon fallback for custom upstreams`
-- `bug: fix startup panic when cache directory is unavailable`
-- `chore: simplify resolver config parsing without behavior change`
-- `ci: add committer metadata to release workflow PR creation`
+## Development Rules
 
-## Non-Goals for Routine Changes
+Before launching agents, apply skill-xray, skill-expert, and skill-brutal to the task.
+Surface expert-level issues, non-obvious issues, blindspots, stale assumptions, and hidden dependencies.
+Also surface missed constraints, edge cases, false positives, verification gaps, overclaims, and weak assumptions.
+Identify improvement potential, inefficiencies, and what is wrong without softening.
+Use these findings to design safe slices, sequencing, checks, and boundaries for complete agent results.
 
-- Large refactors without a clear user-facing benefit.
-- New dependencies when existing stdlib/internal code is sufficient.
-- Behavioral drift from existing defaults without explicit request.
+Every agent prompt must require skill-xray, skill-expert, and skill-brutal for the assigned scope before acting.
+It must surface non-obvious issues, blindspots, stale assumptions, hidden dependencies, and edge cases.
+It must also surface verification gaps, overclaims, failure modes, weak assumptions, and what is wrong.
+The agent must adjust its approach, challenge its assumptions, and flag misleading or incomplete output risks.
+
+Implementation assignments must cover existing patterns, callers, exported-symbol consumers, and failure modes.
+They must also cover concurrency safety and lifecycle cleanup.
+Each assignment must state `Test decision: none` or `Test decision: update`.
+`update` must name the exact existing test that follows an intentional contract change.
+Never request new tests.
+Prohibit broad edits, unrelated cleanup, and unassigned files.
+
+No vague agents.
+Each assignment needs exact targets, non-goals, evidence anchors, acceptance criteria, and an output contract.
+
+Commit completed units continuously.
+Before each commit, use skill-git-commit-format to determine whether staged effects are one coherent unit.
+The skill owns commit-message format and evidence.
+After the boundary is valid, run the repository-owned commit and push workflow.
+Do not commit every trivial edit immediately or defer unrelated work into one end-of-session commit.
+
+Every project-level quality command is quiet by default and verbose on demand.
+This policy applies regardless of language or toolchain.
+It covers Make targets, package scripts, Python CLIs, shell quality gates, and test runners.
+Successful checks print only compact status such as `format: ok`, `lint: ok`, `test: ok`, or `check: ok`.
+On failure, exit non-zero and print the failing step, exit code, and enough output to act without rerunning.
+Full raw output must remain available through `--verbose`, `VERBOSE=1`, or the underlying tool's verbose mode.
+New quality commands and future language setup must follow this policy instead of inventing another logging contract.
