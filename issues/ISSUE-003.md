@@ -1,4 +1,4 @@
-# ISSUE-003 — proxy: TCP admission occupies slots before request reads
+# ISSUE-003 — proxy: TCP admission closes connections with pending replies
 
 State: Investigating
 Authorized-Work: Not-Selected
@@ -13,18 +13,26 @@ Source: `upstream/master@63564a9733bcb214d9acfde8ba31357011617f4b`
 
 ## Root-Cause
 
-Root-Cause [S]: Each TCP read acquires a shared request slot before a request exists; failed acquisition closes the connection with responses still running.
+Root-Cause [S]: Failed follow-up TCP slot acquisition closes a connection before its accepted responses complete.
 
 ## Reach-and-Impact
 
-Reach [S]: TCP and UDP share the proxy admission channel.
-Impact [A]: Idle connections can exhaust capacity and saturation can drop pending TCP replies.
+Reach [S]: TCP and UDP share admission capacity; pre-read reservations also bound accepted idle TCP connections.
+Impact [O]: At limit `1`, a valid first TCP query received `EOF` while its upstream response was pending.
 
 ## Evidence
 
 - [S] `proxy/tcp.go:50-86` acquires before `readTCP` and dispatches answers asynchronously.
 - [S] `proxy/proxy.go:118-146` shares the channel with UDP.
-- [S] Previous review items `E3` and `E5` share this admission root cause.
+- [S] Earlier imported review items `E3` and `E5` share this root cause; the 17-item review maps it to `E4`.
+
+## Bug-Reproduction
+
+Environment: 2026-10-31; Go 1.27.3; Linux/amd64; source anchors match `Source`.
+Command: `go run /tmp/nextdns-semantic-smoke.EhEc1u/main.go /tmp/nextdns-semantic-smoke.EhEc1u`.
+Scenario: Send one TCP query with limit `1` and block its resolver before the response is ready.
+Result [O]: `tcp_lifetime limit=1 half_close=false response_size=0 read_error=EOF`.
+The temporary harness was removed; reconstruct a standalone reproducer before publication.
 
 ## Prior-Art
 
@@ -34,23 +42,29 @@ Contribution fit: Undetermined until prior-art research.
 
 ## Proposed-Change
 
-Admit complete requests rather than idle reads, retain a connection bound, and drain accepted replies before close.
+Keep pre-read reservations and immediate rejection of full new connections.
+Before rejecting a follow-up read, finish that connection's accepted responses rather than closing them.
 
 ## Scope-and-Constraints
 
 - Preserve bounded resource use and TCP pipelining.
 - Exclude upstream admission policy.
+- Moving admission after reading alone loses the existing new-connection bound and is not an accepted correction.
+- The semantic review withdrew `E11` (half-close); no DNS-level `CloseWrite` guarantee was established.
+- RFC 7766 §6.2.4 does not establish that half-close guarantee: https://www.rfc-editor.org/rfc/rfc7766#section-6.2.4.
 
 ## Verification
 
-- Exercise idle TCP connections and saturated slots with delayed replies and UDP requests.
+- At limit `1`, deliver the first response before closing its connection.
+- Preserve `TestServeTCPConn_FullLimitDoesNotBlock` and `TestServeTCPConn_IdleReadTimeout`.
+- Exercise idle TCP connections, saturated slots, delayed replies, and UDP requests without losing resource bounds.
 
 ## Publication-Blockers
 
-Reproduction, upstream prior art, contribution direction, and publication target remain unresolved.
+A retained standalone reproducer, upstream prior art, contribution direction, and publication target remain unresolved.
 
 ## Next-Action
 
-Summary: Reproduce TCP admission failures
-Action: Exercise idle connections and delayed replies at a valid low limit.
-Done-When: Record client-visible results for TCP and UDP.
+Summary: Recreate TCP admission reproducer
+Action: Reconstruct the delayed-first-response failure while retaining immediate rejection of full new connections.
+Done-When: Retain the limit-1 result and identify the existing overload checks the correction must preserve.

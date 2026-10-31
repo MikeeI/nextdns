@@ -23,6 +23,8 @@ Impact [A]: dnsmasq can retain port 53 and prevent NextDNS from binding.
 ## Evidence
 
 - [S] `router/openwrt/setup.go:81-101,224-229`.
+- [S] The dnsmasq manual defines default port `53` and DNS disablement at `0`: https://thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html.
+- [S] The 17-item semantic review retained this as `E5`, severity `High`; no OpenWrt runtime smoke was executed.
 
 ## Prior-Art
 
@@ -32,7 +34,7 @@ Contribution fit: Undetermined until prior-art research.
 
 ## Proposed-Change
 
-Set port zero for an explicit default port and preserve the original UCI state.
+When removing the explicit default port, also set `SetPort0` and preserve the original UCI state.
 
 ## Scope-and-Constraints
 

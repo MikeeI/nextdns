@@ -18,11 +18,22 @@ Root-Cause [S]: Shutdown reads the listener close list without the mutex used fo
 ## Reach-and-Impact
 
 Reach [S]: Concurrent listener setup and context cancellation access `closeAll`.
-Impact [A]: A late listener can remain open while shutdown waits for its goroutine.
+Impact [O]: Forced late registration left `ListenAndServe` pending after cancellation.
+Impact [S]: A listener missed by the close pass keeps its serving goroutine and shutdown wait alive.
 
 ## Evidence
 
 - [S] `proxy/proxy.go:120-168` registers under `closeAllMu` but iterates without it.
+
+## Bug-Reproduction
+
+Environment: 2026-10-31; Go 1.27.3; Linux/amd64; source anchors match `Source`.
+Command: `go run /tmp/nextdns-semantic-smoke.EhEc1u/main.go /tmp/nextdns-semantic-smoke.EhEc1u/extra.go /tmp/nextdns-semantic-smoke.EhEc1u extra`.
+Scenario: Gate both listener-start log callbacks, cancel, allow the close pass, then release listener creation.
+Result [O]: `listener_cancellation returned=false listeners_created_after_cancellation=true` after 200 ms.
+The 17-item semantic review retained this defect as `E3`, severity `High`.
+The schedule was forced; no production frequency or race-detector result was measured.
+The temporary harness was removed; reconstruct a standalone reproducer before publication.
 
 ## Prior-Art
 
@@ -45,10 +56,10 @@ Coordinate listener registration and shutdown atomically and close late listener
 
 ## Publication-Blockers
 
-Reproduction, upstream prior art, contribution direction, and publication target remain unresolved.
+A retained standalone reproducer, upstream prior art, contribution direction, and publication target remain unresolved.
 
 ## Next-Action
 
-Summary: Reproduce listener shutdown race
-Action: Force listener registration during cancellation.
-Done-When: Record race evidence and whether shutdown completes.
+Summary: Recreate listener shutdown reproducer
+Action: Reconstruct cancellation before delayed listener registration.
+Done-When: Retain a runnable command showing the pending shutdown and account for all created listeners.

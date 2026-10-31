@@ -23,6 +23,7 @@ Impact [A]: Normal start and stop can remove administrator-owned DHCP configurat
 ## Evidence
 
 - [S] `router/openwrt/setup.go:143-151,183-193`.
+- [S] The 17-item semantic review retained this as `E15`, severity `Medium`; no OpenWrt runtime smoke was executed.
 
 ## Prior-Art
 
@@ -38,6 +39,8 @@ Record ownership and the exact inserted value; remove only owned changes.
 
 - Preserve existing options and handle LAN address changes.
 - Exclude unrelated UCI keys.
+- The accepted review scope is normal setup and restore; crash recovery has not been reproduced.
+- Keep the separate DHCP membership predicate in `ISSUE-042` outside this ownership correction.
 
 ## Verification
 

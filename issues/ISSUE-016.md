@@ -18,13 +18,23 @@ Root-Cause [S]: An interface profile stores only resolved destination addresses,
 ## Reach-and-Impact
 
 Reach [S]: Profile serialization omits the condition and an empty address set is treated as default.
-Impact [A]: Saving or starting before address assignment can turn an interface rule into a global profile.
+Impact [O]: Saving and reloading a loopback-scoped profile made it match a non-loopback destination.
+The addressless-interface branch remains source-proven, not runtime-observed.
 
 ## Evidence
 
 - [S] `config/profile.go:51-57,90-118,162-170`.
 - [S] `config/config.go:126-127` documents interface-scoped profiles.
-- [S] Previous review items `E18` and `E19` share the missing-condition representation.
+- [S] Earlier imported review items `E18` and `E19` share the missing-condition representation.
+
+## Bug-Reproduction
+
+Environment: 2026-10-31; Go 1.27.3; Linux/amd64; source anchors match `Source`.
+Command: `go run /tmp/nextdns-semantic-smoke.EhEc1u/main.go /tmp/nextdns-semantic-smoke.EhEc1u`.
+Scenario: Save default and `lo=scoped` rules through `ConfigFileStorer`, reload, and compare destination matches.
+Result [O]: `profile_roundtrip before=scoped encoded=[default scoped] after_loopback=scoped after_other=scoped`.
+The 17-item semantic review retained this defect as `E7`, severity `High`.
+The temporary harness was removed; reconstruct a standalone reproducer before publication.
 
 ## Prior-Art
 
@@ -47,10 +57,10 @@ Preserve the interface condition and do not treat absent addresses as a default 
 
 ## Publication-Blockers
 
-Reproduction, upstream prior art, contribution direction, and publication target remain unresolved.
+A retained save/reload reproducer, addressless-interface execution, upstream prior art, direction, and target remain unresolved.
 
 ## Next-Action
 
-Summary: Reproduce interface profile loss
-Action: Exercise profile save and an addressless interface.
-Done-When: Record serialized rules and matching outcomes.
+Summary: Reproduce addressless interface rule
+Action: Evaluate an interface-scoped profile before the interface has an address, without changing real networking.
+Done-When: Record whether the rule is treated as default and retain the earlier save/reload scenario separately.

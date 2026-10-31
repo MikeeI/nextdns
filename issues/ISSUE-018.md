@@ -18,11 +18,22 @@ Root-Cause [S]: The accept loop retries after listener close and Stop does not c
 ## Reach-and-Impact
 
 Reach [S]: Server Stop closes the listener but clears only the client list.
-Impact [A]: A persistent process can spin and retain client handlers after Stop.
+Impact [O]: After listener close, the accept loop continued producing errors in the still-running smoke process.
+Impact [A]: Existing client handlers can remain active; their retention has not been runtime-tested.
+The 17-item review retained accept-loop item `E17` as `Low`; contribution priority also covers untested client cleanup.
 
 ## Evidence
 
 - [S] `ctl/server.go:78-86,163-171`.
+
+## Bug-Reproduction
+
+Environment: 2026-10-31; Go 1.27.3; Linux/amd64; source anchors match `Source`.
+Command: `go run /tmp/nextdns-semantic-smoke.EhEc1u/main.go /tmp/nextdns-semantic-smoke.EhEc1u`.
+Scenario: Close the smoke client, stop its control server, and count subsequent accept errors for about 30 ms.
+Result [O]: `control_stop accept_errors_after_stop=599440`.
+The measured count is not a production CPU-utilization or log-volume measurement.
+The temporary harness was removed; reconstruct a standalone reproducer before publication.
 
 ## Prior-Art
 
@@ -45,10 +56,10 @@ Terminate the accept loop on listener close and close connected clients.
 
 ## Publication-Blockers
 
-Reproduction, upstream prior art, contribution direction, and publication target remain unresolved.
+A retained accept-loop reproducer, active-client verification, upstream prior art, direction, and target remain unresolved.
 
 ## Next-Action
 
-Summary: Reproduce control server shutdown
-Action: Stop an isolated control server with an active client.
-Done-When: Record goroutine and client connection outcomes.
+Summary: Reproduce retained control clients
+Action: Stop an isolated server while a client remains connected and observe handler termination.
+Done-When: Record client closure and goroutine outcomes separately from the observed accept-loop spin.

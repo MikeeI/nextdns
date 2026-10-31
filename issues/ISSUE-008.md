@@ -18,13 +18,23 @@ Root-Cause [S]: Cache fallback copies into the response buffer before the potent
 ## Reach-and-Impact
 
 Reach [S]: The public resolver contract explicitly allows request and response buffer reuse.
-Impact [A]: An expired cache hit can cause an old response to be transmitted instead of a query.
+Impact [O]: A DNS53 retry with aliased buffers transmitted an old response with `QR=1` instead of a query.
 
 ## Evidence
 
 - [S] `resolver/resolver.go:18-20` permits aliasing.
 - [S] `resolver/dns53.go:41-47,66` copies cached data before writing `q.Payload`.
 - [S] `resolver/doh.go:76-88` has the corresponding DoH ordering.
+
+## Bug-Reproduction
+
+Environment: 2026-10-31; Go 1.27.3; Linux/amd64; source anchors match `Source`.
+Command: `go run /tmp/nextdns-alias-smoke-20261031.go`.
+Scenario: Prime a TTL-zero response, then resolve with `q.Payload` sharing the response buffer.
+Result [O]: `aliased_stale_cache transmitted_response_bit=true`.
+The 17-item semantic review retained this public API defect as `E10`, severity `Medium`.
+DNS53 was executed; the corresponding DoH ordering remains source-proven.
+The temporary harness was removed; reconstruct a standalone reproducer before publication.
 
 ## Prior-Art
 
@@ -34,7 +44,7 @@ Contribution fit: Undetermined until prior-art research.
 
 ## Proposed-Change
 
-Preserve the outgoing request or use a separate fallback buffer.
+Preserve the outgoing request before the fallback copy or defer copying the fallback until after network I/O.
 
 ## Scope-and-Constraints
 
@@ -47,10 +57,10 @@ Preserve the outgoing request or use a separate fallback buffer.
 
 ## Publication-Blockers
 
-Reproduction, upstream prior art, contribution direction, and publication target remain unresolved.
+A retained standalone reproducer, upstream prior art, contribution direction, and publication target remain unresolved.
 
 ## Next-Action
 
-Summary: Reproduce aliased buffer corruption
-Action: Resolve with aliased buffers and a stale cache entry.
-Done-When: Record the actual upstream request bytes.
+Summary: Recreate alias buffer reproducer
+Action: Reconstruct the stale-cache retry with shared request and response storage.
+Done-When: Retain a runnable command and the upstream-observed QR bit.
